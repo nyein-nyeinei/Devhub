@@ -1,0 +1,539 @@
+{% if not resources %}
+<div
+    class="flex flex-col items-center justify-center py-14 px-4 text-center bg-white dark:bg-gray-800 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 shadow-sm transition-all">
+    <div
+        class="p-3.5 bg-indigo-50 dark:bg-indigo-950/40 rounded-full text-indigo-600 dark:text-indigo-400 mb-4 animate-pulse">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            class="w-8 h-8">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.603 10.603Z" />
+        </svg>
+    </div>
+    <h3 class="text-base font-bold text-gray-900 dark:text-gray-100 mb-1.5">ကိုက်ညီသည့် Resource ရှာမတွေ့ပါ</h3>
+    <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mb-5 leading-relaxed">အခြား စာသားများဖြင့် ထပ်မံ
+        ရှာဖွေကြည့်ပါ။</p>
+</div>
+{% else %}
+
+<div class="grid grid-cols-1 gap-6">
+    {% for res in resources %}
+    <div class="resource-card bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition flex flex-col justify-between dark:bg-gray-800 dark:border-gray-700"
+        data-resource-id="{{ res[0] }}">
+        <div>
+            <!-- Card Header -->
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span
+                            class="px-2.5 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-lg dark:bg-indigo-950/60 dark:text-indigo-400">
+                            {{ res[4] }}
+                        </span>
+
+                        <!-- Rating Badge -->
+                        <div
+                            class="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-lg border border-amber-200/60 dark:border-amber-800/50">
+                            <span>⭐</span>
+                            <span class="avg-rating">{{ res[11] if res[11] is not none else '0.0' }}</span>
+                            <span class="text-[10px] text-gray-400 dark:text-gray-500 font-normal">
+                                (<span class="total-voters">{{ res[12] if res[12] is not none else '0' }}</span>)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Rating Stars (res[13] ကို သုံးထားသည်) -->
+                    <div class="flex items-center gap-1 rating-container" data-resource-id="{{ res[0] }}"
+                        data-selected-rating="{{ res[13] if res[13] else 0 }}">
+                        {% for star in range(1, 6) %}
+                        <span
+                            class="rating-star cursor-pointer text-lg grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition"
+                            data-rating="{{ star }}" title="{{ star }} Stars">
+                            ⭐
+                        </span>
+                        {% endfor %}
+                    </div>
+
+                    <span class="text-xs text-gray-400 dark:text-gray-500">👀 {{ res[5] }} views</span>
+                </div>
+            </div>
+
+            <!-- Card Title & Description -->
+            <h3
+                class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+                <a href="/open-link/{{ res[0] }}" target="_blank" rel="noopener noreferrer">{{ res[1] }}</a>
+            </h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ res[3] }}</p>
+
+            <!-- Comments Section (res[14] ကို သုံးထားသည်) -->
+            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                <h4 class="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center space-x-1">
+                    <span>💬 Comments</span>
+                    <span
+                        class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-full text-[10px] comment-counter">
+                        {{ res[14]|length if res[14] else 0 }}
+                    </span>
+                </h4>
+
+                <div class="comments-container max-h-56 overflow-y-auto space-y-3 pr-1">
+                    {% if res[14] %}
+                    {% for comment in res[14] %}
+                    <div
+                        class="comment-item bg-gray-50/80 dark:bg-gray-900/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 text-sm transition space-y-2">
+                        <div class="flex items-start space-x-3">
+                            {% if comment[2] and comment[2] != '' and comment[2] != 'default.png' %}
+                            <img src="{{ url_for('static', filename='uploads/profile_pics/' + comment[2]) }}"
+                                onerror="this.onerror=null; this.src='/static/uploads/profile_pics/default.png';"
+                                class="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700 mt-0.5 shadow-sm"
+                                alt="profile">
+                            {% else %}
+                            <div
+                                class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-xs mt-0.5 border border-indigo-200 dark:border-indigo-800 shadow-sm">
+                                {{ comment[1][0] | upper if comment[1] else 'U' }}
+                            </div>
+                            {% endif %}
+
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center gap-1.5 truncate">
+                                        <span class="font-bold text-xs text-gray-900 dark:text-gray-100">{{ comment[1]
+                                            }}</span>
+                                        {% if session.get('username') == comment[1] or session.get('username') == res[6] or session.get('is_admin') == 1 %}
+                                        <form action="/delete-comment/{{ comment[5] }}" method="POST"
+                                            class="delete-comment-form inline">
+                                            <button type="submit"
+                                                class="text-gray-400 hover:text-red-600 transition duration-200 cursor-pointer ml-1 p-0.5 inline-flex items-center"
+                                                title="Delete Comment">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                                        {{ comment[3][:16] if comment[3] else '' }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    class="mt-1 p-2 bg-white dark:bg-gray-800/80 rounded-xl border-l-2 border-indigo-500 shadow-2xs">
+                                    <p class="text-xs text-gray-700 dark:text-gray-300 italic whitespace-pre-line">“{{
+                                        comment[0] }}”</p>
+                                </div>
+
+                                <!-- Nested Replies Section -->
+                                <div
+                                    class="replies-list mt-3 space-y-2 pl-4 border-l-2 border-indigo-100 dark:border-indigo-950 {% if not comment[6] %}hidden{% endif %}">
+                                    {% if comment[6] %}
+                                    {% for reply in comment[6] %}
+                                    <div
+                                        class="reply-item bg-gray-50/80 dark:bg-gray-900/50 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 text-xs space-y-1">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-2">
+                                                {% if reply[2] and reply[2] != '' and reply[2] != 'default.png' %}
+                                                <img src="{{ url_for('static', filename='uploads/profile_pics/' + reply[2]) }}"
+                                                    onerror="this.onerror=null; this.src='/static/uploads/profile_pics/default.png';"
+                                                    class="w-5 h-5 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                                                    alt="profile">
+                                                {% else %}
+                                                <div
+                                                    class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-[10px]">
+                                                    {{ reply[1][0] | upper if reply[1] else 'U' }}
+                                                </div>
+                                                {% endif %}
+                                                <span class="font-bold text-gray-900 dark:text-gray-100">{{ reply[1]
+                                                    }}</span>
+
+                                                {% if session.get('username') == reply[1] or session.get('username') ==
+                                                res[6] or session.get('is_admin') == 1 %}
+                                                <form action="/delete-comment/{{ reply[5] }}" method="POST"
+                                                    class="delete-comment-form inline">
+                                                    <button type="submit"
+                                                        class="text-gray-400 hover:text-red-600 transition duration-200 cursor-pointer ml-1 p-0.5 inline-flex items-center"
+                                                        title="Delete Reply">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                            class="w-3.5 h-3.5">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                            <span class="text-[10px] text-gray-400 dark:text-gray-500">{{ reply[3][:16]
+                                                if reply[3] else '' }}</span>
+                                        </div>
+                                        <p class="text-gray-700 dark:text-gray-300 italic pl-7">“{{ reply[0] }}”</p>
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+
+                                {% if session.get('user_id') %}
+                                <button type="button"
+                                    class="reply-btn mt-2 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition cursor-pointer">
+                                    ↩ Reply
+                                </button>
+                                {% endif %}
+
+                                <form action="/add-comment/{{ res[0] }}" method="POST"
+                                    class="reply-form hidden mt-2 flex items-center space-x-2">
+                                    <input type="hidden" name="parent_id" value="{{ comment[5] }}">
+                                    <input type="text" name="comment_text" required pattern=".*\S.*"
+                                        title="မှတ်ချက် ရေးသားပေးပါ" placeholder="{{ comment[1] }} ကို Reply ပြန်ရန်..."
+                                        class="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 transition">
+                                    <button type="submit"
+                                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition cursor-pointer">
+                                        Send
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="no-comment-text text-xs text-gray-400 dark:text-gray-500 italic pl-1">
+                        ဆွေးနွေးချက်မရှိသေးပါ။ ပထမဆုံးမှတ်ချက်ပေးသူ ဖြစ်လိုက်ပါ။
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Add Main Comment Form -->
+                <form action="/add-comment/{{ res[0] }}" method="POST"
+                    class="comment-form flex items-center space-x-2 mt-2 pt-1">
+                    <input type="text" name="comment_text" required pattern=".*\S.*" title="မှတ်ချက် ရေးသားပေးပါ"
+                        placeholder="မှတ်ချက်တစ်ခုခု ချန်ထားခဲ့ပါ..."
+                        class="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-xs text-gray-700 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 transition">
+                    <button type="submit"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1 cursor-pointer">
+                        <span>Send</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3 mt-4">
+                <div class="flex items-center justify-between text-xs">
+                    <div class="text-gray-500 dark:text-gray-400">
+                        Shared by: <span
+                            class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-bold px-2 py-1 rounded-md ml-1 shadow-sm border border-gray-200/50 dark:border-gray-600">
+                            {{ res[6] }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                    <div class="flex space-x-2">
+                        <button data-id="{{ res[0] }}"
+                            class="like-btn flex items-center space-x-1 px-3 py-1.5 {{ 'bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400' if res[9] == 1 else 'bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 dark:bg-gray-700 dark:text-gray-400' }} rounded-lg text-xs font-medium transition cursor-pointer">
+                            <span>👍</span> <span class="like-count">{{ res[8] }}</span>
+                        </button>
+
+                        <button data-id="{{ res[0] }}"
+                            class="save-btn flex items-center space-x-1 px-3 py-1.5 {{ 'bg-yellow-50 text-yellow-600 dark:bg-yellow-950/50 dark:text-yellow-400' if res[10] == 1 else 'bg-gray-50 text-gray-500 hover:bg-yellow-50 hover:text-yellow-600 dark:bg-gray-700 dark:text-gray-400' }} rounded-lg text-xs font-medium transition cursor-pointer">
+                            <span>📌</span> <span class="save-icon">{{ 'Saved' if res[10] == 1 else 'Save' }}</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        {% if session.get('is_admin') == 1 or res[6] == session.get('username') %}
+                        <form action="/delete-resource/{{ res[0] }}" method="POST" class="delete-resource-form inline">
+                            <button type="submit"
+                                class="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                    stroke="currentColor" class="w-3.5 h-3.5 mr-1">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                </svg>
+                                <span>Delete</span>
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        <a href="/open-link/{{ res[0] }}" target="_blank" rel="noopener noreferrer"
+                            class="inline-flex items-center space-x-1 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-lg text-xs font-bold transition whitespace-nowrap dark:bg-indigo-950/50 dark:text-indigo-400">
+                            <span>🔗 Visit</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div class="flex justify-center items-center space-x-2 my-8">
+    {% if page > 1 %}
+    <a href="{{ url_for('index', page=page-1, category_id=selected_cat_id, search=request.args.get('search', ''), sort=sort_by) }}"
+        class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium text-xs shadow-sm">⬅️
+        Prev</a>
+    {% else %}
+    <span
+        class="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-400 dark:text-gray-600 cursor-not-allowed font-medium text-xs">⬅️
+        Prev</span>
+    {% endif %}
+
+    {% for p in range(1, total_pages + 1) %}
+    {% if p == page %}
+    <span class="px-3.5 py-2 bg-indigo-600 text-white font-bold rounded-xl text-xs shadow-md">{{ p }}</span>
+    {% else %}
+    <a href="{{ url_for('index', page=p, category_id=selected_cat_id, search=request.args.get('search', ''), sort=sort_by) }}"
+        class="px-3.5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-gray-700 hover:text-indigo-600 transition font-medium text-xs shadow-sm">{{
+        p }}</a>
+    {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %} <a
+        href="{{ url_for('index', page=page+1, category_id=selected_cat_id, search=request.args.get('search', ''), sort=sort_by) }}"
+        class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium text-xs shadow-sm">
+        Next ➡️</a>
+        {% else %}
+        <span
+            class="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-400 dark:text-gray-600 cursor-not-allowed font-medium text-xs">Next
+            ➡️</span>
+        {% endif %}
+</div>
+{% endif %}
+
+{% endif %}
+
+<script>
+    // 1. Reply Button Toggle Logic
+    document.addEventListener('click', function (e) {
+        const replyBtn = e.target.closest('.reply-btn');
+        if (replyBtn) {
+            const commentItem = replyBtn.closest('.comment-item');
+            if (commentItem) {
+                const replyForm = commentItem.querySelector('.reply-form');
+                if (replyForm) {
+                    replyForm.classList.toggle('hidden');
+                }
+            }
+        }
+    });
+
+    // 2. Combined Form Submit Logic (Add Comment/Reply, Delete Comment, Delete Resource)
+    document.addEventListener('submit', async function (e) {
+        const targetForm = e.target;
+
+        // --- A. Resource Delete Logic ---
+        const deleteResForm = targetForm.closest('.delete-resource-form');
+        if (deleteResForm) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const result = await Swal.fire({
+                title: 'ဖျက်ရန် သေချာပါသလား?',
+                text: "ဒီ Resource ကို ဖျက်လိုက်ပါက ပြန်လည်ရယူနိုင်မည် မဟုတ်ပါ။",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'ဖျက်မည်',
+                cancelButtonText: 'မဖျက်တော့ပါ'
+            });
+
+            if (result.isConfirmed) {
+                deleteResForm.submit();
+            }
+            return;
+        }
+
+        // --- B. Delete Comment / Reply Logic ---
+        const deleteForm = targetForm.closest('.delete-comment-form');
+        if (deleteForm) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const result = await Swal.fire({
+                title: 'ဖျက်ရန် သေချာပါသလား?',
+                text: "ဒီ မှတ်ချက်/Reply ကို ဖျက်လိုက်ပါက ပြန်လည်ရယူနိုင်မည် မဟုတ်ပါ။",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'ဖျက်မည်',
+                cancelButtonText: 'မဖျက်တော့ပါ'
+            });
+
+            if (!result.isConfirmed) return;
+
+            const targetDiv = deleteForm.closest('.reply-item') || deleteForm.closest('.comment-item');
+            const card = deleteForm.closest('.resource-card');
+
+            try {
+                const response = await fetch(deleteForm.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    if (targetDiv) targetDiv.remove();
+
+                    const counterSpan = card ? card.querySelector('.comment-counter') : null;
+                    if (counterSpan) {
+                        const currentCount = parseInt(counterSpan.textContent || '0');
+                        counterSpan.textContent = Math.max(0, currentCount - 1);
+                    }
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'မှတ်ချက်ကို ဖျက်လိုက်ပါပြီ',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                } else {
+                    Swal.fire('အမှား', data.message || 'ဖျက်၍ မရပါ၊ အမှားတစ်ခု ဖြစ်ပေါ်နေပါသည်။', 'error');
+                }
+            } catch (error) {
+                console.error('Delete Error:', error);
+                Swal.fire('အမှား', 'ကွန်ရက် အမှားတစ်ခု ဖြစ်ပေါ်နေပါသည်။', 'error');
+            }
+            return;
+        }
+
+        // --- C. Add Comment & Reply Submit Logic (AJAX) ---
+        const form = targetForm.closest('.reply-form, .comment-form');
+        if (form) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+            const isReply = form.classList.contains('reply-form');
+            const card = form.closest('.resource-card');
+            const resourceId = card ? card.dataset.resourceId : null;
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    form.reset();
+
+                    if (isReply) {
+                        form.classList.add('hidden');
+                        const commentItem = form.closest('.comment-item');
+                        let repliesContainer = commentItem.querySelector('.replies-list');
+
+                        if (!repliesContainer) {
+                            repliesContainer = document.createElement('div');
+                            repliesContainer.className = 'replies-list mt-3 space-y-2 pl-4 border-l-2 border-indigo-100 dark:border-indigo-950';
+                            commentItem.querySelector('.flex-1').appendChild(repliesContainer);
+                        } else {
+                            repliesContainer.classList.remove('hidden');
+                        }
+
+                        const replyAvatarHTML = (data.profile_pic && data.profile_pic !== 'default.png' && data.profile_pic !== '')
+                            ? `<img src="/static/uploads/profile_pics/${data.profile_pic}" onerror="this.onerror=null; this.src='/static/uploads/profile_pics/default.png';" class="w-5 h-5 rounded-full object-cover border border-gray-200 dark:border-gray-700" alt="profile">`
+                            : `<div class="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-[10px]">${data.username ? data.username[0].toUpperCase() : 'U'}</div>`;
+
+                        const newReplyHTML = `
+                        <div class="reply-item bg-gray-50/80 dark:bg-gray-900/50 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800 text-xs space-y-1">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    ${replyAvatarHTML}
+                                    <span class="font-bold text-gray-900 dark:text-gray-100">${data.username}</span>
+                                    <form action="/delete-comment/${data.comment_id}" method="POST" class="delete-comment-form inline">
+                                        <button type="submit" class="text-gray-400 hover:text-red-600 transition duration-200 cursor-pointer ml-1 p-0.5 inline-flex items-center" title="Delete Reply">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                                <span class="text-[10px] text-gray-400 dark:text-gray-500">${data.created_at || ''}</span>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300 italic pl-7">“${data.comment_text}”</p>
+                        </div>
+                    `;
+                        repliesContainer.insertAdjacentHTML('beforeend', newReplyHTML);
+                    } else {
+                        const commentsContainer = card.querySelector('.comments-container');
+                        const noCommentText = commentsContainer.querySelector('.no-comment-text');
+                        if (noCommentText) noCommentText.remove();
+
+                        const avatarHTML = (data.profile_pic && data.profile_pic !== 'default.png' && data.profile_pic !== '')
+                            ? `<img src="/static/uploads/profile_pics/${data.profile_pic}" onerror="this.onerror=null; this.src='/static/uploads/profile_pics/default.png';" class="w-7 h-7 rounded-full object-cover border border-gray-200 dark:border-gray-700 mt-0.5 shadow-sm" alt="profile">`
+                            : `<div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-bold text-xs mt-0.5 border border-indigo-200 dark:border-indigo-800 shadow-sm">${data.username ? data.username[0].toUpperCase() : 'U'}</div>`;
+
+                        const deleteBtnHTML = (data.current_user === data.username) ? `
+                        <form action="/delete-comment/${data.comment_id}" method="POST" class="delete-comment-form inline">
+                            <button type="submit" class="text-gray-400 hover:text-red-600 transition duration-200 cursor-pointer ml-1 p-0.5 inline-flex items-center" title="Delete Comment">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                </svg>
+                            </button>
+                        </form>
+                    ` : '';
+
+                        const newCommentHTML = `
+                        <div class="comment-item bg-gray-50/80 dark:bg-gray-900/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 text-sm transition space-y-2">
+                            <div class="flex items-start space-x-3">
+                                ${avatarHTML}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center gap-1.5 truncate">
+                                            <span class="font-bold text-xs text-gray-900 dark:text-gray-100">${data.username}</span>
+                                            ${deleteBtnHTML}
+                                        </div>
+                                        <span class="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">${data.created_at || ''}</span>
+                                    </div>
+                                    <div class="mt-1 p-2 bg-white dark:bg-gray-800/80 rounded-xl border-l-2 border-indigo-500 shadow-2xs">
+                                        <p class="text-xs text-gray-700 dark:text-gray-300 italic whitespace-pre-line">“${data.comment_text}”</p>
+                                    </div>
+
+                                    <div class="replies-list mt-3 space-y-2 pl-4 border-l-2 border-indigo-100 dark:border-indigo-950 hidden"></div>
+
+                                    <button type="button" class="reply-btn mt-2 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition cursor-pointer">
+                                        ↩ Reply
+                                    </button>
+
+                                    <form action="/add-comment/${resourceId}" method="POST" class="reply-form hidden mt-2 flex items-center space-x-2">
+                                        <input type="hidden" name="parent_id" value="${data.comment_id}">
+                                        <input type="text" name="comment_text" required pattern=".*\\S.*" title="မှတ်ချက် ရေးသားပေးပါ"
+                                               placeholder="${data.username} ကို Reply ပြန်ရန်..."
+                                               class="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 transition">
+                                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition cursor-pointer">
+                                            Send 
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                        commentsContainer.insertAdjacentHTML('beforeend', newCommentHTML);
+                    }
+
+                    const counterSpan = card ? card.querySelector('.comment-counter') : null;
+                    if (counterSpan) {
+                        counterSpan.textContent = parseInt(counterSpan.textContent || '0') + 1;
+                    }
+                } else {
+                    Swal.fire('အမှား', data.message || 'အမှားတစ်ခု ဖြစ်ပေါ်နေပါသည်။', 'error');
+                }
+            } catch (error) {
+                console.error('Comment Post Error:', error);
+                Swal.fire('အမှား', 'ကွန်ရက် အမှားတစ်ခု ဖြစ်ပေါ်နေပါသည်။', 'error');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+    });
+</script>
+
+<script src="{{ url_for('static', filename='js/ratings.js') }}"></script>

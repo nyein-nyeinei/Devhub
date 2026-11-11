@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ resource[1] }} - DevHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 p-8">
+    <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        
+        <!-- Resource Badge & Title -->
+        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-lg dark:bg-indigo-950/60 dark:text-indigo-400">
+            {{ resource[4] }}
+        </span>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-3 mb-2">{{ resource[1] }}</h1>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">{{ resource[3] }}</p>
+        
+        <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700 mb-6">
+            <a href="/open-link/{{ resource[0] }}" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition">Visit Link</a>
+            <a href="/" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">← ပင်မစာမျက်နှာသို့ ပြန်ရန်</a>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+            <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4">Comments ({{ comments | length }})</h3>
+            
+            <!-- Comment List -->
+            <div class="space-y-3 mb-6">
+                {% for comment in comments %}
+                <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-1">
+                        <!-- Profile Pic + Username (comment[1]) -->
+                        <div class="flex items-center gap-2">
+                            <img src="{{ url_for('static', filename='uploads/profile_pics/' + (comment[2] if comment[2] else 'default.png')) }}" 
+                                 class="w-5 h-5 rounded-full object-cover" alt="profile">
+                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">{{ comment[1] }}</span>
+                            
+                            <!-- Comment Delete Button (SVG Icon) -->
+                            {% if session.get('username') == comment[1] or session.get('is_admin') == 1 %}
+                            <form action="/delete-comment/{{ comment[5] }}" method="POST" class="inline" onsubmit="return confirm('ဒီ Comment ကို ဖျက်ရန် သေချာပါသလား?');">
+                                <button type="submit" class="inline-flex items-center gap-1 text-red-400 hover:text-red-600 text-[10px] font-semibold transition cursor-pointer ml-1" title="Delete Comment">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                    </svg>
+                                    <span>Delete</span>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        <!-- Created Date (comment[3]) -->
+                        <span class="text-[10px] text-gray-400">{{ comment[3][:16] if comment[3] else '' }}</span>
+                    </div>
+                    <!-- Comment Text (comment[0]) -->
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1 pl-7">“{{ comment[0] }}”</p>
+
+                    <!-- Replies -->
+                    {% if comment[6] %}
+                    <div class="mt-2 pl-7 space-y-2 border-l-2 border-indigo-100 dark:border-gray-700">
+                        {% for reply in comment[6] %}
+                        <div class="text-xs pt-1">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-bold text-gray-800 dark:text-gray-200">{{ reply[1] }}</span>
+                                    
+                                    <!-- Reply Delete Button (SVG Icon) -->
+                                    {% if session.get('username') == reply[1] or session.get('username') == resource[6] or session.get('is_admin') == 1 %}
+                                    <form action="/delete-comment/{{ reply[5] }}" method="POST" class="inline" onsubmit="return confirm('ဒီ Reply ကို ဖျက်ရန် သေချာပါသလား?');">
+                                        <button type="submit" class="inline-flex items-center gap-1 text-red-400 hover:text-red-600 text-[10px] font-semibold transition cursor-pointer ml-1" title="Delete Reply">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                            </svg>
+                                            <span>Delete</span>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                <span class="text-[9px] text-gray-400">{{ reply[3][:16] if reply[3] else '' }}</span>
+                            </div>
+                            <p class="text-gray-500 italic">“{{ reply[0] }}”</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-xs text-gray-400 italic">မှတ်ချက် မရှိသေးပါ။</p>
+                {% endfor %}
+            </div>
+
+            <!-- Add Comment Form -->
+            <form action="/add-comment/{{ resource[0] }}" method="POST" class="flex gap-2">
+                <input type="text" name="comment_text" placeholder="မှတ်ချက်တစ်ခုခု ချန်ထားခဲ့ပါ..." required
+                    class="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800 dark:text-gray-100">
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition cursor-pointer">
+                    Send
+                </button>
+            </form>
+        </div>
+
+    </div>
+</body>
+</html>
