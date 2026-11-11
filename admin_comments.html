@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                💬 Comment Moderation
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Review and moderate user comments across all resources.
+            </p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" 
+           class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-xl text-sm font-semibold transition">
+            ⬅️ Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Comments Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50/50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th class="px-6 py-4">Author</th>
+                        <th class="px-6 py-4">Comment Content</th>
+                        <th class="px-6 py-4">Resource Title</th>
+                        <th class="px-6 py-4 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
+                    {% for c in comments %}
+                    <tr id="comment-row-{{ c.id }}" class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30">
+                        <td class="px-6 py-4 font-semibold text-gray-800 dark:text-white">
+                            @{{ c.author_name }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate">
+                            "{{ c.content }}"
+                        </td>
+                        <td class="px-6 py-4 text-indigo-600 dark:text-indigo-400 font-medium">
+                            <a href="/resource/{{ c.resource_id }}" target="_blank" class="hover:underline">
+                                {{ c.resource_title }} ↗
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button data-comment-id="{{ c.id }}" 
+                                    class="delete-comment-btn bg-red-50 hover:bg-red-100 text-red-600 text-xs px-3 py-1.5 rounded-lg font-semibold transition">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-gray-400">
+                            No comments found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Clean Modern JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.delete-comment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.getAttribute('data-comment-id');
+            if (!confirm("Are you sure you want to delete this comment?")) return;
+
+            fetch(`/admin/comment/delete/${commentId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`comment-row-${commentId}`).remove();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(err => console.error(err));
+        });
+    });
+});
+</script>
+{% endblock %}

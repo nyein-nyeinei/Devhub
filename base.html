@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DevHub - UCSM Resource Platform{% endblock %}</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SweetAlert2 CSS & JS CDN (UI အလှအတွက် CSS ပါ တစ်ခါတည်း ပါဝင်ပါသည်) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Myanmar:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* မြန်မာစာနှင့် အင်္ဂလိပ်စာ နှစ်ခုလုံးအတွက် Font သတ်မှတ်ခြင်း */
+        body {
+            font-family: 'Inter', 'Noto Sans Myanmar', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+
+    <!-- ================= NAVBAR ================= -->
+    <nav
+        class="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 shadow-sm py-3.5 px-6 flex justify-between items-center">
+
+        <!-- Logo -->
+        <a href="/"
+            class="text-2xl font-extrabold text-indigo-600 tracking-tight flex items-center gap-2 hover:opacity-90 transition">
+            <span>DevHub</span>
+        </a>
+
+        <!-- Right Side Nav Items -->
+        <div class="flex items-center space-x-5">
+
+            {% if session.get('user_id') %}
+
+            <span class="text-gray-600 text-sm font-semibold hidden md:inline-block">
+                Hi, {{ session.get('username') }} 👋
+            </span>
+
+            <!-- ⚡ ADMIN PANEL BUTTON (Admin များသာ မြင်ရမည်) -->
+            {% if session.get('is_admin') or session.get('role') == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}"
+                class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold px-3.5 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Admin Panel</span>
+            </a>
+            {% endif %}
+
+            <!-- 🔔 Notification Icon & Badge -->
+            <a href="{{ url_for('notifications') }}"
+                class="relative text-gray-500 hover:text-indigo-600 transition text-lg p-1" title="Notifications">
+
+                <i class="fa-regular fa-bell"></i>
+
+                {% if unread_count is defined and unread_count > 0 %}
+                <span
+                    class="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                    {% if unread_count > 99 %}
+                    99+
+                    {% else %}
+                    {{ unread_count }}
+                    {% endif %}
+                </span>
+                {% endif %}
+            </a>
+
+            <!-- Profile Link -->
+            <a href="/profile"
+                class="text-gray-600 hover:text-indigo-600 text-sm font-semibold transition flex items-center gap-1.5">
+                <i class="fa-regular fa-user"></i>
+                <span class="hidden sm:inline">My Profile</span>
+            </a>
+
+            <!-- Logout Link -->
+            <a href="/logout"
+                class="text-rose-500 hover:text-rose-700 text-sm font-semibold transition flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span class="hidden sm:inline">Logout</span>
+            </a>
+
+            {% else %}
+
+            <a href="/login" class="text-gray-600 hover:text-indigo-600 text-sm font-semibold transition">
+                Login
+            </a>
+
+            <a href="/register"
+                class="bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-indigo-700 transition shadow-sm hover:shadow">
+                Register
+            </a>
+
+            {% endif %}
+
+        </div>
+
+    </nav>
+
+    <!-- ================= FLASH MESSAGES CONTAINER ================= -->
+    <div class="container mx-auto px-4 mt-5 max-w-4xl">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+
+        {% set border_style = 'bg-emerald-50 text-emerald-800 border-emerald-300' %}
+        {% set icon_class = 'fa-circle-check text-emerald-500' %}
+
+        {% if category == 'error' or category == 'danger' %}
+        {% set border_style = 'bg-rose-50 text-rose-800 border-rose-300' %}
+        {% set icon_class = 'fa-circle-xmark text-rose-500' %}
+        {% elif category == 'warning' %}
+        {% set border_style = 'bg-amber-50 text-amber-800 border-amber-300' %}
+        {% set icon_class = 'fa-triangle-exclamation text-amber-500' %}
+        {% elif category == 'info' %}
+        {% set border_style = 'bg-sky-50 text-sky-800 border-sky-300' %}
+        {% set icon_class = 'fa-circle-info text-sky-500' %}
+        {% endif %}
+
+        <div id="flash-alert-{{ loop.index }}"
+            class="p-4 mb-3 text-sm rounded-2xl flex justify-between items-center shadow-sm border {{ border_style }} transition-all duration-500"
+            role="alert">
+
+            <div class="flex items-center gap-3">
+                <i class="fa-solid {{ icon_class }} text-lg"></i>
+                <span class="font-medium">
+                    {{ message }}
+                </span>
+            </div>
+
+            <button type="button"
+                class="text-gray-400 hover:text-gray-700 transition rounded-lg p-1 inline-flex items-center"
+                onclick="dismissAlert('flash-alert-{{ loop.index }}')">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
+
+        </div>
+
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+    </div>
+
+    <!-- ================= PAGE CONTENT ================= -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="bg-gray-900 text-gray-400 text-center py-6 text-sm mt-auto border-t border-gray-800">
+
+        <p class="flex items-center justify-center gap-1.5 font-medium">
+            © 2026 <span class="text-indigo-400 font-bold">DevHub</span>. All rights reserved.
+        </p>
+
+    </footer>
+
+    <!-- ================= ALL JAVASCRIPTS ================= -->
+    <script>
+        // Flash Message Dismiss Function
+        function dismissAlert(elementId) {
+            const alertElement = document.getElementById(elementId);
+            if (alertElement) {
+                alertElement.style.opacity = '0';
+                alertElement.style.transform = 'translateY(-8px)';
+                setTimeout(() => alertElement.remove(), 300);
+            }
+        }
+
+        // 4 စက္ကန့်အကြာတွင် Flash Message ကို အလိုအလျောက် ပျောက်သွားစေရန်
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(function () {
+                const alerts = document.querySelectorAll('[id^="flash-alert-"]');
+                alerts.forEach(alert => {
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(-8px)';
+                    setTimeout(() => alert.remove(), 300);
+                });
+            }, 4000);
+        });
+
+        // ⚡ GLOBAL EVENT LISTENER FOR DELETE COMMENTS & REPLIES ⚡
+        document.addEventListener('submit', function (e) {
+            const currentForm = e.target;
+
+            // Delete Form ဟုတ်မဟုတ် စစ်ဆေးခြင်း
+            if (currentForm && currentForm.classList.contains('delete-comment-form')) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const actionUrl = currentForm.getAttribute('action');
+
+                // Target Element ကို တိကျစွာ ရှာဖွေခြင်း
+                const targetDiv = currentForm.closest('.comment-item') ||
+                    currentForm.closest('.reply-item') ||
+                    currentForm.closest('.p-3') ||
+                    currentForm.closest('.flex.items-start') ||
+                    currentForm.closest('.space-y-1');
+
+                const parentContainer = currentForm.closest('.mt-4') || document.body;
+
+                // SweetAlert2 Box ခေါ်ယူခြင်း
+                Swal.fire({
+                    title: 'ဖျက်ရန် သေချာပါသလား?',
+                    text: 'ဒီ မှတ်ချက်/Reply ကို ဖျက်ရန် သေချာပါသလား?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'ဖျက်မည်',
+                    cancelButtonText: 'မဖျက်တော့ပါ',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl px-4 py-2 font-bold',
+                        cancelButton: 'rounded-xl px-4 py-2 font-bold'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(actionUrl, {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    if (targetDiv) {
+                                        targetDiv.style.opacity = '0';
+                                        targetDiv.style.transform = 'translateY(10px)';
+                                        targetDiv.style.transition = 'all 0.3s ease';
+
+                                        setTimeout(() => {
+                                            targetDiv.remove();
+                                            const counterSpan = parentContainer.querySelector('.comment-counter');
+                                            if (counterSpan) {
+                                                const newCount = Math.max(0, parseInt(counterSpan.innerText || '0', 10) - 1);
+                                                counterSpan.innerText = newCount;
+                                            }
+                                        }, 300);
+                                    } else {
+                                        // Target Div မတွေ့ပါက Page ကို Reload လုပ်မည်
+                                        window.location.reload();
+                                    }
+
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'ဖျက်ပြီးပါပြီ',
+                                        text: 'မှတ်ချက်ကို အောင်မြင်စွာ ဖျက်လိုက်ပါပြီ။',
+                                        timer: 1500,
+                                        showConfirmButton: false,
+                                        customClass: { popup: 'rounded-2xl' }
+                                    });
+                                } else if (data.status === 'error') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'မအောင်မြင်ပါ',
+                                        text: data.message || 'တစ်ခုခု မှားယွင်းနေပါသည်။',
+                                        customClass: { popup: 'rounded-2xl' }
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error deleting comment/reply:', error);
+                            });
+                    }
+                });
+            }
+        }, true);
+    </script>
+
+    {% block scripts %}
+    {% endblock %}
+
+</body>
+
+</html>

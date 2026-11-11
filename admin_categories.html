@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Categories - DevHub Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">
+                <i class="fa-solid fa-folder-plus text-purple-600 mr-2"></i> Category Management
+            </h1>
+            <a href="/admin" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 mb-4 text-sm rounded-lg {% if category == 'success' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Add Category Form -->
+        <form action="/admin/categories" method="POST" class="flex gap-4 mb-8">
+            <input type="text" name="category_name" placeholder="Category နာမည်အသစ် ရိုက်ထည့်ပါ (ဥပမာ- Machine Learning)" required
+                   class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center">
+                <i class="fa-solid fa-plus mr-2"></i> Add Category
+            </button>
+        </form>
+
+        <!-- Categories Table -->
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-purple-100 text-purple-900 border-b">
+                    <th class="p-3">ID</th>
+                    <th class="p-3">Category Name</th>
+                    <th class="p-3 text-center">Total Resources</th>
+                    <th class="p-3 text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr class="border-b hover:bg-gray-50" id="cat-row-{{ cat.id }}">
+                    <td class="p-3 font-semibold text-gray-600">#{{ cat.id }}</td>
+                    <td class="p-3 font-bold text-gray-800">{{ cat.name }}</td>
+                    <td class="p-3 text-center">
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-semibold text-xs">
+                            {{ cat.resource_count }} Posts
+                        </span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button data-id="{{ cat.id }}" data-name="{{ cat.name }}"
+                                onclick="deleteCategory(this.getAttribute('data-id'), this.getAttribute('data-name'))" 
+                                class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-xs">
+                            <i class="fa-solid fa-trash mr-1"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+    function deleteCategory(catId, catName) {
+        Swal.fire({
+            title: `'${catName}' ကို ဖျက်မှာ သေချာပါသလား?`,
+            text: "ဤ Category ကို ဖျက်လိုက်ပါက ပြန်လည်ယူ၍ ရမည်မဟုတ်ပါ!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'ဖျက်မည်',
+            cancelButtonText: 'မဖျက်တော့ပါ'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/admin/delete_category/' + catId, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('cat-row-' + catId).remove();
+                        Swal.fire('ဖျက်ပြီးပါပြီ!', 'Category ကို စနစ်ထဲမှ ဖျက်ကူးပြီးပါပြီ။', 'success');
+                    } else {
+                        Swal.fire('မှားယွင်းမှု', data.message || 'ဖျက်၍ မရပါ', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error("Error:", err);
+                    Swal.fire('မှားယွင်းမှု', 'စနစ်အတွင်း အမှားအယွင်း ဖြစ်ပေါ်နေပါသည်', 'error');
+                });
+            }
+        });
+    }
+    </script>
+</body>
+</html>

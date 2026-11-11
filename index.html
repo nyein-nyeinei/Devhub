@@ -1,0 +1,619 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+
+    <!-- Header Banner -->
+    <div
+        class="bg-gradient-to-r from-indigo-600 to-violet-700 rounded-3xl p-6 md:p-8 shadow-xl text-white mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl md:text-4xl font-extrabold mb-2">Welcome back, {{ session['username'] }} 👋</h1>
+            <p class="text-indigo-100 text-sm md:text-base max-w-xl">Explore and share valuable resources with the
+                DevHub community.</p>
+        </div>
+
+    </div>
+
+    <!-- Search Bar -->
+    <div class="mb-8 max-w-2xl mx-auto">
+        <form action="/" method="GET" id="searchForm" class="relative flex items-center">
+            <span class="absolute left-4 text-gray-400 text-lg">🔍</span>
+            <input type="text" name="search" id="searchInput" value="{{ request.args.get('search', '') }}"
+                placeholder="Search resources..."
+                class="w-full pl-12 pr-24 py-3.5 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:focus:ring-indigo-400">
+            <button type="submit"
+                class="absolute right-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
+                Search
+            </button>
+        </form>
+    </div>
+
+    <!-- Main Layout Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+        <!-- Sidebar Navigation -->
+        <div class="lg:col-span-1 space-y-4">
+            <div class="px-2">
+                <a href="/my-saved"
+                    class="flex items-center justify-center space-x-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm shadow-md hover:shadow-lg transition w-full">
+                    <span>📌</span>
+                    <span>My Saved Resources</span>
+                </a>
+            </div>
+            <div class="px-2 pt-2">
+                <a href="/profile"
+                    class="flex items-center justify-center space-x-3 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold text-sm shadow-md hover:shadow-lg transition w-full">
+                    <span>👤</span>
+                    <span>My Profile Dashboard</span>
+                </a>
+            </div>
+
+            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 px-2 pt-2">လေ့လာရန် ကဏ္ဍများ</h3>
+            <div
+                class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 space-y-1 dark:bg-gray-800 dark:border-gray-700">
+                <!-- All Resources Button -->
+                <a href="/" data-id=""
+                    class="cat-btn flex items-center space-x-3 px-4 py-3 rounded-xl transition {% if not selected_cat_id %} bg-indigo-50 text-indigo-600 font-semibold dark:bg-indigo-950/50 dark:text-indigo-400 {% else %} text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-gray-100 {% endif %}">
+                    <span>🏠</span>
+                    <span>All Resources</span>
+                </a>
+
+                <!-- Category List Loop -->
+                {% for cat in categories %}
+                <a href="/?category_id={{ cat[0] }}" data-id="{{ cat[0] }}"
+                    class="cat-btn flex items-center justify-between px-4 py-3 rounded-xl transition {% if selected_cat_id == cat[0] %} bg-indigo-50 text-indigo-600 font-semibold dark:bg-indigo-950/50 dark:text-indigo-400 {% else %} text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-gray-100 {% endif %}">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg">{{ cat[2] }}</span>
+                        <span class="text-sm font-medium">{{ cat[1] }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="lg:col-span-3 space-y-6">
+            <!-- Filter & Action Header Bar -->
+            <div
+                class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <h2 id="content-header-title" class="text-xl font-extrabold text-gray-900 dark:text-gray-100">
+                        {% if request.args.get('search') %} Search Results {% else %} 📊 Resources {% endif %}
+                    </h2>
+                    <a href="/" id="clearSearchLink"
+                        class="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold underline ml-1 transition {% if not request.args.get('search') %}hidden{% endif %}">
+                        🔄 Clear Search
+                    </a>
+                </div>
+
+                <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+                    <!-- Sorting Buttons -->
+                    <div
+                        class="inline-flex rounded-xl p-1 bg-gray-200/80 backdrop-blur-sm text-xs font-bold dark:bg-gray-700">
+                        <button data-sort="latest"
+                            class="sort-btn px-3 py-2 rounded-lg transition {% if sort_by == 'latest' or not sort_by %} bg-white text-indigo-600 shadow-sm dark:bg-gray-600 dark:text-indigo-400 {% else %} text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 {% endif %}">
+                            ✨ Latest
+                        </button>
+                        <button data-sort="popular"
+                            class="sort-btn px-3 py-2 rounded-lg transition {% if sort_by == 'popular' %} bg-white text-indigo-600 shadow-sm dark:bg-gray-600 dark:text-indigo-400 {% else %} text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 {% endif %}">
+                            🔥 Popular
+                        </button>
+                    </div>
+
+                    <button id="shareBtn"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition flex items-center space-x-1.5">
+                        <span class="text-sm">➕</span>
+                        <span>Share Resource</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resource Cards Dynamic Container -->
+            <div id="resource-container-box">
+                {% include 'partials/resource_cards.html' %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Share Resource Modal -->
+<div id="shareModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden justify-center items-center z-50 p-4">
+    <div
+        class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-gray-100 transform transition-all scale-95 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-extrabold text-gray-900 dark:text-gray-100">Resource အသစ် မျှဝေရန် ✨</h3>
+            <button id="closeModal"
+                class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-xl font-bold">&times;</button>
+        </div>
+
+        <form action="/share" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Resource ခေါင်းစဉ်
+                    (Title)</label>
+                <input type="text" name="title" required placeholder="ဥပမာ - Python OOP အခြေခံစာအုပ်"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:focus:ring-indigo-400">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">လင့်ခ် (URL)</label>
+                <input type="url" name="url" required placeholder="https://example.com/resource"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:focus:ring-indigo-400">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">အကြောင်းအရာ အကျဉ်း
+                    (Description)</label>
+                <textarea name="description" rows="3"
+                    placeholder="ဒီ Resource ကနေ ဘာတွေလေ့လာလို့ရလဲဆိုတာ အကျဉ်းချုပ် ရေးပေးပါ..."
+                    class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:focus:ring-indigo-400"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">အဆင့်
+                        (Level)</label>
+                    <select name="level"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">ကဏ္ဍ
+                        (Category)</label>
+                    <select name="category_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                        {% for cat in categories %}
+                        <option value="{{ cat[0] }}">{{ cat[2] }} {{ cat[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold shadow-md hover:shadow-lg transition mt-4">
+                ထည့်သွင်းမည် 🚀
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // XSS Protection Helper Function
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, function (m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[m];
+        });
+    }
+
+    // 1. Share Modal Event Listeners
+    const shareBtn = document.getElementById('shareBtn');
+    const shareModal = document.getElementById('shareModal');
+    const closeModal = document.getElementById('closeModal');
+
+    if (shareBtn && shareModal && closeModal) {
+        shareBtn.addEventListener('click', () => {
+            shareModal.classList.remove('hidden');
+            shareModal.classList.add('flex');
+        });
+        closeModal.addEventListener('click', () => {
+            shareModal.classList.add('hidden');
+            shareModal.classList.remove('flex');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target === shareModal) {
+                shareModal.classList.add('hidden');
+                shareModal.classList.remove('flex');
+            }
+        });
+    }
+
+    // Skeleton Loader HTML Structure Component
+    const skeletonLoaderHtml = `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 space-y-4 animate-pulse"><div class="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-xl"></div><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div><div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div></div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 space-y-4 animate-pulse"><div class="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-xl"></div><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div><div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div></div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 space-y-4 animate-pulse"><div class="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-xl"></div><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div><div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div></div>
+        </div>
+    `;
+
+    // 🌟 Helper Function: Fetch Resources from Server using AJAX
+    function fetchResourcesDynamic() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const containerBox = document.getElementById('resource-container-box');
+        const clearLink = document.getElementById('clearSearchLink');
+        const headerTitle = document.getElementById('content-header-title');
+
+        if (containerBox) containerBox.innerHTML = skeletonLoaderHtml;
+
+        fetch('/?' + urlParams.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (containerBox) containerBox.innerHTML = data.html_content;
+
+                    // Toggle Clear Search button dynamically
+                    if (urlParams.get('search')) {
+                        if (clearLink) clearLink.classList.remove('hidden');
+                        if (headerTitle) headerTitle.innerText = 'Search Results';
+                    } else {
+                        if (clearLink) clearLink.classList.add('hidden');
+                        if (headerTitle) headerTitle.innerText = '📊 Resources';
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching resources:', error));
+    }
+
+    // 🌟 2. Debounced Live Search Implementation
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+
+            searchTimeout = setTimeout(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('page', '1');
+
+                const queryValue = searchInput.value.trim();
+                if (queryValue) {
+                    urlParams.set('search', queryValue);
+                } else {
+                    urlParams.delete('search');
+                }
+
+                window.history.pushState({}, '', '/?' + urlParams.toString());
+                fetchResourcesDynamic();
+            }, 400);
+        });
+
+        if (searchForm) {
+            searchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('page', '1');
+
+                const queryValue = searchInput.value.trim();
+                if (queryValue) {
+                    urlParams.set('search', queryValue);
+                } else {
+                    urlParams.delete('search');
+                }
+
+                window.history.pushState({}, '', '/?' + urlParams.toString());
+                fetchResourcesDynamic();
+            });
+        }
+    }
+
+    // 🌟 3. Clear Search Button Click AJAX
+    const clearSearchLink = document.getElementById('clearSearchLink');
+    if (clearSearchLink) {
+        clearSearchLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (searchInput) searchInput.value = '';
+
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.delete('search');
+            urlParams.set('page', '1');
+
+            window.history.pushState({}, '', '/?' + urlParams.toString());
+            fetchResourcesDynamic();
+        });
+    }
+
+    // 🌟 Like Toggle Function
+    function toggleLike(resourceId, btnElement) {
+        fetch(`/like/${resourceId}`, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const countSpan = btnElement.querySelector('.like-count');
+                    const iconSpan = btnElement.querySelector('.like-icon');
+
+                    if (countSpan) countSpan.innerText = data.like_count;
+
+                    if (data.liked) {
+                        btnElement.classList.add('text-red-500', 'bg-red-50', 'dark:bg-red-950/40');
+                        btnElement.classList.remove('text-gray-500');
+                        if (iconSpan) iconSpan.innerText = '❤️';
+                    } else {
+                        btnElement.classList.remove('text-red-500', 'bg-red-50', 'dark:bg-red-950/40');
+                        btnElement.classList.add('text-gray-500');
+                        if (iconSpan) iconSpan.innerText = '🤍';
+                    }
+                }
+            })
+            .catch(error => console.error('Error toggling like:', error));
+    }
+
+    // 📌 Save Toggle Function
+    function toggleSave(resourceId, btnElement) {
+        fetch(`/save/${resourceId}`, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const iconSpan = btnElement.querySelector('.save-icon');
+
+                    if (data.saved) {
+                        btnElement.classList.add('text-amber-500', 'bg-amber-50', 'dark:bg-amber-950/40');
+                        btnElement.classList.remove('text-gray-500');
+                        if (iconSpan) iconSpan.innerText = 'Saved';
+                    } else {
+                        btnElement.classList.remove('text-amber-500', 'bg-amber-50', 'dark:bg-amber-950/40');
+                        btnElement.classList.add('text-gray-500');
+                        if (iconSpan) iconSpan.innerText = 'Save';
+                    }
+                }
+            })
+            .catch(error => console.error('Error toggling save:', error));
+    }
+
+    // Global Event Delegation System
+    document.addEventListener('click', function (e) {
+
+        // Real-time Resource Like System
+        const likeBtn = e.target.closest('.like-btn');
+        if (likeBtn) {
+            e.preventDefault();
+            const resourceId = likeBtn.dataset.id;
+            if (typeof toggleLike === 'function') toggleLike(resourceId, likeBtn);
+            return;
+        }
+
+        // Real-time Resource Save System
+        const saveBtn = e.target.closest('.save-btn');
+        if (saveBtn) {
+            e.preventDefault();
+            const resourceId = saveBtn.dataset.id;
+            if (typeof toggleSave === 'function') toggleSave(resourceId, saveBtn);
+            return;
+        }
+
+        // 🌟 Real-time Pagination System
+        const paginationLink = e.target.closest('a[href*="page="]');
+        if (paginationLink) {
+            e.preventDefault();
+
+            const hrefUrl = paginationLink.getAttribute('href');
+            const urlParams = new URLSearchParams(hrefUrl.split('?')[1]);
+            const targetPage = urlParams.get('page') || '1';
+
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.set('page', targetPage);
+
+            window.history.pushState({}, '', '/?' + currentParams.toString());
+            fetchResourcesDynamic();
+            return;
+        }
+
+        // Real-time Sorting System
+        const sortBtn = e.target.closest('.sort-btn');
+        if (sortBtn) {
+            e.preventDefault();
+            const sortBy = sortBtn.dataset.sort;
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('page', '1');
+            urlParams.set('sort', sortBy);
+
+            window.history.pushState({}, '', '/?' + urlParams.toString());
+
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm', 'dark:bg-gray-600', 'dark:text-indigo-400');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-100', 'dark:hover:bg-gray-600');
+            });
+
+            sortBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-sm', 'dark:bg-gray-600', 'dark:text-indigo-400');
+            sortBtn.classList.remove('text-gray-600', 'hover:bg-gray-100', 'dark:hover:bg-gray-600');
+
+            fetchResourcesDynamic();
+            return;
+        }
+
+        // Real-time Category Filter System
+        const catBtn = e.target.closest('.cat-btn');
+        if (catBtn) {
+            e.preventDefault();
+
+            const catId = catBtn.dataset.id;
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('page', '1');
+            if (catId) {
+                urlParams.set('category_id', catId);
+            } else {
+                urlParams.delete('category_id');
+            }
+
+            window.history.pushState({}, '', '/?' + urlParams.toString());
+
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'font-semibold', 'dark:bg-indigo-950/50', 'dark:text-indigo-400');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900', 'dark:text-gray-400', 'dark:hover:bg-gray-700/50', 'dark:hover:text-gray-100');
+            });
+
+            catBtn.classList.add('bg-indigo-50', 'text-indigo-600', 'font-semibold', 'dark:bg-indigo-950/50', 'dark:text-indigo-400');
+            catBtn.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900', 'dark:text-gray-400', 'dark:hover:bg-gray-700/50', 'dark:hover:text-gray-100');
+
+            fetchResourcesDynamic();
+            return;
+        }
+    });
+
+    // 5. AJAX Form Submission System (Comments, Delete Resource & Delete Comment)
+    document.addEventListener('submit', async function (e) {
+        const currentForm = e.target;
+
+        // --- A. Delete Resource AJAX ---
+        if (currentForm.classList.contains('delete-resource-form')) {
+            e.preventDefault();
+
+            // SweetAlert2 Confirmation Dialog
+            const result = await Swal.fire({
+                title: 'ဖျက်ရန် သေချာပါသလား?',
+                text: "ဤ Resource အား အပြီးတိုင်ဖျက်ရန် သေချာပါသလားရှင့်?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'ဖျက်မည်',
+                cancelButtonText: 'မဖျက်တော့ပါ'
+            });
+
+            if (!result.isConfirmed) return;
+
+            const actionUrl = currentForm.getAttribute('action');
+            const resourceCard = currentForm.closest('.resource-card');
+
+            fetch(actionUrl, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && resourceCard) {
+                        resourceCard.style.transition = 'all 0.5s ease';
+                        resourceCard.style.opacity = '0';
+                        resourceCard.style.transform = 'scale(0.9)';
+                        setTimeout(() => {
+                            resourceCard.remove();
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: data.message || 'Resource ကို ဖျက်လိုက်ပါပြီ',
+                                showConfirmButton: false,
+                                timer: 2000
+                            });
+                        }, 500);
+                    } else if (data.status === 'error') {
+                        Swal.fire('အမှား', data.message || 'ဖျက်၍ မရပါ။', 'error');
+                    }
+                })
+                .catch(error => console.error('Error deleting resource:', error));
+            return;
+        }
+
+        // --- B. Add Comment AJAX ---
+        if (currentForm.classList.contains('comment-form')) {
+            e.preventDefault();
+            const formData = new FormData(currentForm);
+            const actionUrl = currentForm.getAttribute('action');
+            const commentInput = currentForm.querySelector('input[name="comment_text"]');
+
+            if (!commentInput || !commentInput.value.trim()) return;
+
+            fetch(actionUrl, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const commentsContainer = currentForm.previousElementSibling;
+                        const noCommentText = commentsContainer.querySelector('.no-comment-text');
+                        if (noCommentText) noCommentText.remove();
+
+                        const safeProfilePic = escapeHtml(data.profile_pic);
+                        const safeUsername = escapeHtml(data.username);
+                        const safeCommentText = escapeHtml(data.comment_text);
+                        const safeCreatedAt = escapeHtml(data.created_at);
+                        const safeCommentId = escapeHtml(String(data.comment_id));
+
+                        const newCommentHtml = `
+                        <div class="flex items-start space-x-2.5 bg-gray-50/70 dark:bg-gray-900/40 p-2.5 rounded-xl text-sm opacity-0 transform translate-y-2 transition-all duration-300">
+                            <img src="/static/uploads/profile_pics/${safeProfilePic}" class="w-6 h-6 rounded-full object-cover border border-gray-200 dark:border-gray-700 mt-0.5" alt="profile">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-bold text-xs text-gray-800 dark:text-gray-200">${safeUsername}</span>
+                                        <form action="/delete-comment/${safeCommentId}" method="POST" class="delete-comment-form inline">
+                                            <button type="submit" class="text-red-400 hover:text-red-600 text-[10px] transition cursor-pointer ml-1">🗑</button>
+                                        </form>
+                                    </div>
+                                    <span class="text-[10px] text-gray-400 dark:text-gray-500">${safeCreatedAt}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5 whitespace-pre-line">${safeCommentText}</p>
+                            </div>
+                        </div>
+                        `;
+                        commentsContainer.insertAdjacentHTML('beforeend', newCommentHtml);
+                        setTimeout(() => {
+                            const lastComment = commentsContainer.lastElementChild;
+                            if (lastComment) lastComment.classList.remove('opacity-0', 'translate-y-2');
+                        }, 50);
+
+                        const parentContainer = currentForm.closest('.mt-4');
+                        if (parentContainer) {
+                            const counterSpan = parentContainer.querySelector('.comment-counter');
+                            if (counterSpan) counterSpan.innerText = parseInt(counterSpan.innerText || '0', 10) + 1;
+                        }
+
+                        commentInput.value = '';
+                        commentsContainer.scrollTop = commentsContainer.scrollHeight;
+                    }
+                })
+                .catch(error => console.error('Error adding comment:', error));
+            return;
+        }
+
+        // --- C. Delete Comment / Reply AJAX ---
+        if (currentForm.classList.contains('delete-comment-form')) {
+            e.preventDefault();
+
+            // SweetAlert2 Confirmation Dialog
+            const result = await Swal.fire({
+                title: 'ဖျက်ရန် သေချာပါသလား?',
+                text: "ဤမှတ်ချက် သို့မဟုတ် Reply ကို ဖျက်ရန် သေချာပါသလားဟင်?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'ဖျက်မည်',
+                cancelButtonText: 'မဖျက်တော့ပါ'
+            });
+
+            if (!result.isConfirmed) return;
+
+            const actionUrl = currentForm.getAttribute('action');
+            const targetDiv = currentForm.closest('.flex.items-start') || currentForm.closest('.space-y-1') || currentForm.closest('.bg-gray-50\\/80');
+            const parentContainer = currentForm.closest('.mt-4') || document.body;
+
+            fetch(actionUrl, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && targetDiv) {
+                        targetDiv.style.opacity = '0';
+                        targetDiv.style.transform = 'translateY(10px)';
+                        targetDiv.style.transition = 'all 0.3s ease';
+                        setTimeout(() => {
+                            targetDiv.remove();
+                            const counterSpan = parentContainer.querySelector('.comment-counter');
+                            if (counterSpan) {
+                                const newCount = Math.max(0, parseInt(counterSpan.innerText || '0', 10) - 1);
+                                counterSpan.innerText = newCount;
+                            }
+                        }, 300);
+                    } else if (data.status === 'error') {
+                        Swal.fire('အမှား', data.message || 'ဖျက်၍ မရပါ။', 'error');
+                    }
+                })
+                .catch(error => console.error('Error deleting comment/reply:', error));
+            return;
+        }
+    });
+</script>
+
+<script src="{{ url_for('static', filename='js/ratings.js') }}"></script>
+{% endblock %}

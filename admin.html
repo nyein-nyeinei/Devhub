@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+
+    <!-- Top Header -->
+    <div
+        class="flex items-center justify-between bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-3xl text-white shadow-lg">
+        <div>
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                ⚡ DevHub Admin Dashboard
+            </h1>
+            <p class="text-purple-100 text-sm mt-1">
+                Overview of platform metrics, user analytics, and content moderation.
+            </p>
+        </div>
+        <span class="bg-white/20 px-4 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md">
+            Role: Super Admin
+        </span>
+    </div>
+
+    <!-- System Overview Analytics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Total Users Card -->
+        <a href="{{ url_for('admin_users') }}"
+            class="block p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-purple-50 dark:bg-purple-900/30 text-purple-600 rounded-xl text-xl">👥</div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Users</p>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">{{ users|length }}</h3>
+                </div>
+            </div>
+        </a>
+
+        <!-- Shared Resources Card -->
+        <a href="#resource-table-section"
+            class="block p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-200 border border-gray-100 dark:border-gray-700 cursor-pointer">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 rounded-xl text-xl">🚀</div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Shared Resources</p>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">{{ resources|length }}</h3>
+                </div>
+            </div>
+        </a>
+
+        <!-- Total Comments Card -->
+        <a href="{{ url_for('admin_comments') }}"
+            class="block p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-200 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-xl text-xl">💬</div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Comments</p>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">{{ total_comments }}</h3>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Category Breakdown Analytics Section -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <h2 class="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+            📊 Category Distribution Breakdown
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for cat in category_stats %}
+            {% set total = resources|length if resources|length > 0 else 1 %}
+            {% set percentage = ((cat.count / total) * 100)|round(1) %}
+            <div class="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-xl border border-gray-100 dark:border-gray-600">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">{{ cat.name }}</span>
+                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">{{ cat.count }} posts ({{ percentage }}%)</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                    <div class="cat-progress-bar bg-indigo-600 h-2 rounded-full transition-all duration-500" data-percent="{{ percentage }}"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Main Data Table: Manage Resources -->
+    <div id="resource-table-section"
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden scroll-mt-6">
+        <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h2 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                📁 Resource Management Table
+            </h2>
+            
+            <!-- Live Search Bar -->
+            <div class="relative w-full md:w-72">
+                <input type="text" id="adminResourceSearch" placeholder="Search title, author, category..." 
+                    class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                <span class="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+                <thead class="bg-gray-50 dark:bg-gray-700/50 text-xs text-gray-400 uppercase">
+                    <tr>
+                        <th class="px-6 py-4">Title</th>
+                        <th class="px-6 py-4">Author</th>
+                        <th class="px-6 py-4">Category</th>
+                        <th class="px-6 py-4">Stats</th>
+                        <th class="px-6 py-4 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="resourceTableBody" class="divide-y divide-gray-100 dark:divide-gray-700">
+                    {% for item in resources %}
+                    <tr id="admin-res-{{ item.id }}" class="resource-row hover:bg-gray-50/50 dark:hover:bg-gray-700/30">
+                        <td class="px-6 py-4 font-semibold text-gray-800 dark:text-white resource-title">
+                            {{ item.title }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span
+                                class="resource-author bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-xs font-medium">
+                                @{{ item.author_name }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-medium text-indigo-600 dark:text-indigo-400 resource-category">
+                            {{ item.category_name }}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-gray-400">
+                            👁️ {{ item.views }} | ⭐ {{ item.rating }}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button data-id="{{ item.id }}"
+                                class="delete-btn text-red-500 hover:text-red-700 font-medium text-xs bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-800 transition">
+                                Delete Post
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set dynamic width for category progress bars safely
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.cat-progress-bar').forEach(bar => {
+            const percent = bar.getAttribute('data-percent');
+            if (percent) {
+                bar.style.width = percent + '%';
+            }
+        });
+    });
+
+    // Live Search Functionality
+    document.getElementById('adminResourceSearch').addEventListener('keyup', function() {
+        const query = this.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.resource-row');
+
+        rows.forEach(row => {
+            const title = row.querySelector('.resource-title').textContent.toLowerCase();
+            const author = row.querySelector('.resource-author').textContent.toLowerCase();
+            const category = row.querySelector('.resource-category').textContent.toLowerCase();
+
+            if (title.includes(query) || author.includes(query) || category.includes(query)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Delete Button Handling
+    document.addEventListener('click', async function (e) {
+        if (e.target && e.target.classList.contains('delete-btn')) {
+            const resId = e.target.getAttribute('data-id');
+
+            if (!confirm("ဒီ Resource ကို အပြီးသတ် ဖျက်ရန် သေချာပါသလား?")) return;
+
+            try {
+                const response = await fetch(`/admin/resource/delete/${resId}`, { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    const targetRow = document.getElementById(`admin-res-${resId}`);
+                    if (targetRow) targetRow.remove();
+                } else {
+                    alert(result.message || 'Error occurred');
+                }
+            } catch (err) {
+                console.error('Delete error:', err);
+            }
+        }
+    });
+</script>
+{% endblock %}
